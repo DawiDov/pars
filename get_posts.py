@@ -5,19 +5,17 @@ from pars import Reverb
 class ReverbGetPost(Reverb):
     def paginate_page(self, category):
         #листает страницы
-        page_link = self.category_select(category)
-        self.get_posts(page_link)
+        page_link = self.create_link(category)
         page = 1
-        next_page = self.paginate(page_link)
         self.loop = True
         while self.loop:
             try:
-                page += 1
                 p = open('parsing.txt', 'a')
                 p.write(f'\n\n________PAGE:{page}________\n\n')
                 p.close()
                 print(f'\nParsing page {page}....\n')
-                self.get_posts(next_page + str(page))
+                self.get_posts(page_link + str(page))
+                page += 1
 
             except:
                 break
@@ -31,11 +29,16 @@ class ReverbGetPost(Reverb):
 
     def get_posts(self, link):
         #парсит посты
+
         try:
-            driver.implicitly_wait(3)
+            driver.implicitly_wait(5)
+            driver.get(link)
+            driver.implicitly_wait(5)
             posts = driver.find_elements_by_class_name('tiles')
+            print(posts)
             for post in posts:
                 try:
+                    driver.implicitly_wait(5)
                     links = self.list_link(post.find_elements_by_tag_name('a'))
                     print(links)
                     for link in links:
@@ -67,14 +70,13 @@ class ReverbGetPost(Reverb):
         list_link = []
         for link in links:
             list_link.append(link.get_attribute('href'))
-        
         return list_link
 
     def pars_post(self, link):
         #запускает методы парсинга отдельных элементов поста
         print('\nGetting the post header...')
         try:
-            driver.implicitly_wait(4)
+            driver.implicitly_wait(5)
             get_post_header = self.get_post_header(link)
             print('Done!')
         except:
@@ -83,21 +85,21 @@ class ReverbGetPost(Reverb):
         print('\nGetting the post images...')
 
         try:
-            driver.implicitly_wait(4)
+            driver.implicitly_wait(5)
             get_post_image = self.get_post_image(link)
             print('Done!')
         except:
             print('Could not get the post images:(')
         print('\nGetting the post links...')
         try:
-            driver.implicitly_wait(4)
+            driver.implicitly_wait(5)
             get_post_link = self.get_post_link(link)
             print('Done!')
         except:
             print('Could not get the post links :(')
         print('\nGetting the post text...')
         try:
-            driver.implicitly_wait(4)
+            driver.implicitly_wait(5)
             get_post_text = self.get_post_text(link)
             print('Done!')
         except:
@@ -109,7 +111,6 @@ class ReverbGetPost(Reverb):
             "POST_LINKS": get_post_link,
             "POST_TEXT": get_post_text,
         }
-
         return dict_post
 
     def get_post_header(self, link):
