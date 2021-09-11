@@ -1,16 +1,23 @@
 from driver.chromedriver import driver
+import deepl
 
 
 class Reverb():
-    def create_link(self, category):
-        #создание ссылки
+    def _create_link(self, category):
+        """
+        возвращает ссылку страницы
+        """
         search_category = '+'.join(category.split())
         url = ('https://reverb.com/news?category_name='
                ) + f'{search_category}' + '&page='
         return url
 
     def posts(self, category):
-        url = self.create_link(category)
+        """
+        парсит заголовки 
+        постов и ссылки на них 
+        """
+        url = self._create_link(category)
         page_number = 1
         loop = True
         while loop:
@@ -50,68 +57,58 @@ class Reverb():
                 print("Post parsing finished...")
                 loop = False
 
+
+
+
+
     def get_post(self, link):
-        #запускает методы парсинга отдельных элементов поста
-        print('\nGetting the post header...')
-        try:
-            driver.implicitly_wait(5)
-            get_post_header = self.get_post_header(link)
-            print('Done!')
-        except Exception as ex:
-            print(ex)
-            print('Could not get the post header :(')
-
-        print('\nGetting the post images...')
-
-        try:
-            driver.implicitly_wait(5)
-            get_post_image = self.get_post_image(link)
-            print('Done!')
-        except:
-            print('Could not get the post images:(')
-        print('\nGetting the post links...')
-        try:
-            driver.implicitly_wait(5)
-            get_post_link = self.get_post_link(link)
-            print('Done!')
-        except:
-            print('Could not get the post links :(')
-        print('\nGetting the post text...')
-        try:
-            driver.implicitly_wait(5)
-            get_post_text = self.get_post_text(link)
-            print('Done!')
-        except:
-            print('Could not get the post text :(')
-
+        """
+        запускает методы парсинга 
+        отдельных элементов поста
+        """
+        get_post_header = self._get_post_header(link)
+        get_post_image = self._get_post_images(link)
+        get_post_link = self._get_post_links(link)
+        get_post_text = self._get_post_text(link)
+        
         dict_post = {
             "POST_HEADER": get_post_header,
             "POST_IMAGES": get_post_image,
             "POST_LINKS": get_post_link,
             "POST_TEXT": get_post_text,
         }
-        print(dict_post)
-        # return dict_post
+        return dict_post
+      
+ 
 
-    def get_post_header(self, link):
-        #парсинг заголовок
+    def _get_post_header(self, link):
+        """
+        парсинг заголовок
+        """
         driver.get(link)
+        print('\nGetting the post header...')
         for header in driver.find_elements_by_tag_name('h1'):
             return header.text
 
-    def get_post_image(self, link):
-        #парсит ссылки на картинки
+    def _get_post_images(self, link):
+        """
+        парсит ссылки на картинки
+        """
         driver.get(link)
-        list_link_image = []
+        print('\nGetting the post images...')
+        list_link_images = []
         for atr_class in driver.find_elements_by_class_name(
                 'blog-post__content'):
             for image in atr_class.find_elements_by_tag_name('img'):
-                list_link_image.append(image.get_attribute("src"))
-        return list_link_image
+                list_link_images.append(image.get_attribute("src"))
+        return list_link_images
 
-    def get_post_link(self, link):
-        #парсит ссылки на товары
+    def _get_post_links(self, link):
+        """
+        парсит ссылки на товары
+        """
         driver.get(link)
+        print('\nGetting the post links...')
         list_link = []
         for atr_class in driver.find_elements_by_class_name(
                 'blog-post__content'):
@@ -119,9 +116,12 @@ class Reverb():
                 list_link.append(link.get_attribute("href"))
         return list_link
 
-    def get_post_text(self, link):
-        #парсит текст поста
+    def _get_post_text(self, link):
+        """
+        парсит текст поста
+        """
         driver.get(link)
+        print('\nGetting the post text...\n')
         post_paragraphs = driver.find_elements_by_tag_name('p')
         text = []
         try:
@@ -129,4 +129,28 @@ class Reverb():
                 text.append(paragraph.text)
         except:
             print('cannot parse text further')
+        
         return text
+
+
+
+
+
+class Deepl():
+    """
+    xahava3279@stvbz.com
+    klDhd9f7G4h1kj
+    """
+    def translate(self, text):
+        """
+        Первеодит принятый текст
+        """
+        translator = deepl.Translator("f39c003c-f13f-516d-0cd8-97585d4e6b71:fx")
+        result = translator.translate_text(text, target_lang="EN-US")
+        print(result)  
+
+
+if __name__ != '__main__':
+    Reverb().posts("Gear History")
+    print(Reverb().get_post("https://reverb.com/news/70s-martins-what-you-need-to-know"))
+    Deepl().translate()
