@@ -66,16 +66,12 @@ class Reverb():
         запускает методы парсинга 
         отдельных элементов поста
         """
-        get_post_header = self._get_post_header(link)
-        get_post_image = self._get_post_images(link)
-        get_post_link = self._get_post_links(link)
-        get_post_text = self._get_post_text(link)
-        
+        driver.get(link)
         dict_post = {
-            "POST_HEADER": get_post_header,
-            "POST_IMAGES": get_post_image,
-            "POST_LINKS": get_post_link,
-            "POST_TEXT": get_post_text,
+            "POST_HEADER": self._get_post_header(link),
+            "POST_IMAGES": self._get_post_images(link),
+            "POST_LINKS": self._get_post_links(link),
+            "POST_TEXT": self._get_post_text(link),
         }
         return dict_post
       
@@ -85,7 +81,6 @@ class Reverb():
         """
         парсинг заголовок
         """
-        driver.get(link)
         print('\nGetting the post header...')
         for header in driver.find_elements_by_tag_name('h1'):
             return header.text
@@ -94,7 +89,6 @@ class Reverb():
         """
         парсит ссылки на картинки
         """
-        driver.get(link)
         print('\nGetting the post images...')
         list_link_images = []
         for atr_class in driver.find_elements_by_class_name(
@@ -107,7 +101,6 @@ class Reverb():
         """
         парсит ссылки на товары
         """
-        driver.get(link)
         print('\nGetting the post links...')
         list_link = []
         for atr_class in driver.find_elements_by_class_name(
@@ -120,7 +113,6 @@ class Reverb():
         """
         парсит текст поста
         """
-        driver.get(link)
         print('\nGetting the post text...\n')
         post_paragraphs = driver.find_elements_by_tag_name('p')
         text = []
