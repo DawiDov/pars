@@ -121,28 +121,6 @@ class Reverb():
         return [e.text for e in card.find_elements_by_xpath('/html/body/main/section/section[1]/div/div[2]/a')]
             
 
-             
-          
-
-
-### Commented out
-
-import deepl
-
-
-class Deepl():
-    """
-    xahava3279@stvbz.com
-    klDhd9f7G4h1kj
-    """
-    def translate(self, text):
-        """
-        Первеодит принятый текст
-        """
-        translator = deepl.Translator(
-            "f39c003c-f13f-516d-0cd8-97585d4e6b71:fx")
-        result = translator.translate_text(text, target_lang="EN-US")
-        print(result)
 
 if __name__ != "__main__":
     r = Reverb()
