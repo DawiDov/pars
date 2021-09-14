@@ -1,41 +1,42 @@
 from driver.chromedriver import driver
-import deepl
 
 
 class Reverb():
-    def _create_link(self, category):
-        """
-        возвращает ссылку страницы
-        """
-        search_category = '+'.join(category.split())
-        url = ('https://reverb.com/news?category_name='
-               ) + f'{search_category}' + '&page='
-        return url
-
     def posts(self, category):
         """
         парсит заголовки 
         постов и ссылки на них 
         """
-        url = self._create_link(category)
-        page_number = 1
+    
+        page = 1
+        posts = []
         loop = True
         while loop:
-            print(f"Parsing page {page_number}")
-            new_url = url + str(page_number)
-            driver.get(new_url)
-            page_number += 1
-            article_card = driver.find_elements_by_class_name('tiles__tile')
+            print(f"Parsing page {page}")
+            category_page_url = self._category_page_url(category, page)
+            driver.get(category_page_url)
+            page += 1
+            cards = driver.find_elements_by_class_name('tiles__tile')
             index_link = 1
-            for texts in article_card:
+
+
+            for card in cards:
+                """
+                если не итерирвать то пишет 'list' object has no attribute 'text'
+                arturdavidov@archi reverb_pars %
+                """
                 title = [
-                    a.text for a in texts.find_elements_by_class_name(
+                    a.text for a in card.find_elements_by_class_name(
                         'article-card__title')
                 ]
+
+                """без итерации не находит нужный елемент"""
                 date = [
-                    b.text for b in texts.find_elements_by_class_name(
+                    b.text for b in card.find_elements_by_class_name(
                         'article-card__date')
-                ]
+                        ]
+
+                """без итерации не находит нужный елемент"""
                 link = [
                     c.get_attribute("href")
                     for c in driver.find_elements_by_xpath(
@@ -43,23 +44,14 @@ class Reverb():
                     )
                 ]
                 index_link += 1
-                if title == date:
-                    break
 
-                posts = {'title': title, 'date': date, 'link': link}
-
-                print(posts)
-
-            if [
-                    e.text for e in texts.find_elements_by_xpath(
-                        '/html/body/main/section/section[1]/div/div[2]/a')
-            ]:
-                print("Post parsing finished...")
+                posts.append({'title': title, 'date': date, 'link': link})
+            
+            if self._no_page_links(card):
                 loop = False
+                return posts
 
-
-
-
+        
 
     def get_post(self, link):
         """
@@ -67,25 +59,23 @@ class Reverb():
         отдельных элементов поста
         """
         driver.get(link)
-        dict_post = {
-            "POST_HEADER": self._get_post_header(link),
-            "POST_IMAGES": self._get_post_images(link),
-            "POST_LINKS": self._get_post_links(link),
-            "POST_TEXT": self._get_post_text(link),
-        }
-        return dict_post
-      
- 
 
-    def _get_post_header(self, link):
+        return {
+            "POST_HEADER": self._get_post_header(),
+            "POST_IMAGES": self._get_post_images(),
+            "POST_LINKS": self._get_post_links(),
+            "POST_TEXT": self._get_post_text(),
+        }
+
+    def _get_post_header(self):
         """
         парсинг заголовок
         """
         print('\nGetting the post header...')
-        for header in driver.find_elements_by_tag_name('h1'):
-            return header.text
+        return [header.text for header in driver.find_elements_by_tag_name('h1')]
+     
 
-    def _get_post_images(self, link):
+    def _get_post_images(self):
         """
         парсит ссылки на картинки
         """
@@ -97,7 +87,8 @@ class Reverb():
                 list_link_images.append(image.get_attribute("src"))
         return list_link_images
 
-    def _get_post_links(self, link):
+
+    def _get_post_links(self):
         """
         парсит ссылки на товары
         """
@@ -109,23 +100,34 @@ class Reverb():
                 list_link.append(link.get_attribute("href"))
         return list_link
 
-    def _get_post_text(self, link):
+    def _get_post_text(self):
         """
         парсит текст поста
         """
         print('\nGetting the post text...\n')
+       
         post_paragraphs = driver.find_elements_by_tag_name('p')
-        text = []
-        try:
-            for paragraph in list(post_paragraphs):
-                text.append(paragraph.text)
-        except:
-            print('cannot parse text further')
-        
-        return text
+        return [text.text for text in list(post_paragraphs)]
 
 
+    def _category_page_url(self, category, page):
+        """
+        возвращает ссылку страницы
+        """
+        category = '+'.join(category.split())
+        return f'https://reverb.com/news?category_name={category}&page={page}'
 
+    def _no_page_links(self, card):   
+        return [e.text for e in card.find_elements_by_xpath('/html/body/main/section/section[1]/div/div[2]/a')]
+            
+
+             
+          
+
+
+### Commented out
+
+import deepl
 
 
 class Deepl():
@@ -137,12 +139,11 @@ class Deepl():
         """
         Первеодит принятый текст
         """
-        translator = deepl.Translator("f39c003c-f13f-516d-0cd8-97585d4e6b71:fx")
+        translator = deepl.Translator(
+            "f39c003c-f13f-516d-0cd8-97585d4e6b71:fx")
         result = translator.translate_text(text, target_lang="EN-US")
-        print(result)  
+        print(result)
 
-
-if __name__ != '__main__':
-    Reverb().posts("Gear History")
-    print(Reverb().get_post("https://reverb.com/news/70s-martins-what-you-need-to-know"))
-    Deepl().translate()
+if __name__ != "__main__":
+    r = Reverb()
+    r.posts("Gear History")
