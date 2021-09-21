@@ -163,7 +163,7 @@ class Reverb():
                                 italic придется искать отдельно так как действие другое
                                 заменять приедтся не на b, а на i.
                             """
-                            tag.replace_with(tag.string.wrap(soup.new_tag('b')))
+                            tag.replace_with(tag.string.wrap(soup.new_tag('b'))) #замена работает
                         else:
                             #полное удаление работает
                             del tag[attr]
