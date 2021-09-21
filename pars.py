@@ -2,6 +2,7 @@
 from driver.chromedriver import driver
 from bs4 import BeautifulSoup
 import requests
+import re
 
 
 class Reverb():
@@ -130,45 +131,46 @@ class Reverb():
         ]
 
     def _get_html(self, soup):
+        # """делает header"""
+        # for content in soup.find("div", class_="blog-post__content").find_all(
+        #         "div", class_="size-200 weight-bold scaling-pb-2"):
 
-        for content in soup.find("div", class_="blog-post__content").find_all(
-                "div", class_="size-200 weight-bold scaling-pb-2"):
+        #     newh2 = soup.new_tag('h2')
+        #     try:
+        #         content.replace_with(content.string.wrap(newh2))
+        #     except Exception:
+        #         continue
 
-            newh2 = soup.new_tag('h2')
-            try:
-                content.replace_with(content.string.wrap(newh2))
-            except Exception:
-                continue
+        # """делает alt в img"""
+        # for small_name in soup.find(
+        #         "div", class_="blog-post__content").find_all(
+        #             "div", class_="size-80 align-center mt-half mb-3"):
+        #     for images in soup.find(
+        #             "div", class_="blog-post__content").find_all(
+        #                 "div", class_="size-80 align-center mt-half mb-3"):
+        #         img = images.find_previous_sibling().find("img")
+        #         img['alt'] = small_name.text
+        #         small_name.decompose()
 
-        for small_name in soup.find(
-                "div", class_="blog-post__content").find_all(
-                    "div", class_="size-80 align-center mt-half mb-3"):
-            for images in soup.find(
-                    "div", class_="blog-post__content").find_all(
-                        "div", class_="size-80 align-center mt-half mb-3"):
-                img = images.find_previous_sibling().find("img")
-                img['alt'] = small_name.text
-                small_name.decompose()
 
+    
         for tag in soup():
             for attr in ['class', 'style']:
-                try:
+                try:    
                     for value in tag[attr]:
-                        print(value)
-                        if value.find('%bold', '%italic'):
-                            print(value)
-                            tag.replace_with(tag.string.wrap(
-                                soup.new_tag('b')))
-
+                        if value == "weight-bold": #получается настроить только так на конкертный атрибут
+                            """не могу настроить регулярки для поиска слова bold отдельно
+                                italic придется искать отдельно так как действие другое
+                                заменять приедтся не на b, а на i.
+                            """
+                            tag.replace_with(tag.string.wrap(soup.new_tag('b')))
                         else:
+                            #полное удаление работает
                             del tag[attr]
-                except Exception as e:
-                    print(f'ошибка {e}')
 
-                # if '%%bold' in tag[attr]:
-                #     tag[attr].replace_with(soup.new_tag('b'))
-                # else:
-                #     del tag[attr]
+                except:
+                    pass
+                        
 
         with open('header_test.html', 'w') as f:
             f.write(soup.prettify())
