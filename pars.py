@@ -1,4 +1,3 @@
-
 from driver.chromedriver import driver
 from bs4 import BeautifulSoup
 import requests
@@ -68,10 +67,13 @@ class Reverb():
         driver.get(link)
 
         return {
-            # "POST_HEADER": self._get_post_header(),
-            # "POST_IMAGES": self._get_post_images(),
-            # "POST_LINKS": self._get_post_links(),
-            # "POST_TEXT": self._get_post_text(),
+            "PUBLICATION_DATE": self._get_date(soup),
+            "AUTHOR": self._get_author(),
+            "POST_HEADER": self._get_post_header(),
+            "PICTURE_HEADER": self._get_header_picture_url(),
+            "POST_IMAGES": self._get_post_images(),
+            "POST_LINKS": self._get_post_links(),
+            "POST_TEXT": self._get_post_text(),
             "GET_HTML": self._get_html(soup)
         }
 
@@ -117,6 +119,33 @@ class Reverb():
         post_paragraphs = driver.find_elements_by_tag_name('p')
         return [text.text for text in list(post_paragraphs)]
 
+    def _get_header_picture_url(self):
+        """
+        парсит хедер картинку
+        """
+        print('\nGetting the header picture url...')
+        url = [
+            image_link.get_attribute('style')
+            for image_link in driver.find_elements_by_tag_name('header')
+        ]
+        return url[1]
+
+    def _get_date(self, soup):
+        """
+        парсит дату публицкации
+        """
+        print('\nGetting the date...')
+        return soup.find(string=re.compile("Published")).strip()
+
+    def _get_author(self):
+        """
+        парсит автора статьи
+        """
+        print('\nGetting the author...')
+        return driver.find_element_by_xpath(
+            '/html/body/main/section/article/aside/div/div/div[1]/div[1]/span/span/a'
+        ).text
+
     def _category_page_url(self, category, page):
         """
         возвращает ссылку страницы
@@ -131,51 +160,48 @@ class Reverb():
         ]
 
     def _get_html(self, soup):
-        # """делает header"""
-        # for content in soup.find("div", class_="blog-post__content").find_all(
-        #         "div", class_="size-200 weight-bold scaling-pb-2"):
+        """делает header"""
+        for content in soup.find("div", class_="blog-post__content").find_all(
+                "div", class_="size-200 weight-bold scaling-pb-2"):
 
-        #     newh2 = soup.new_tag('h2')
-        #     try:
-        #         content.replace_with(content.string.wrap(newh2))
-        #     except Exception:
-        #         continue
-
-        # """делает alt в img"""
-        # for small_name in soup.find(
-        #         "div", class_="blog-post__content").find_all(
-        #             "div", class_="size-80 align-center mt-half mb-3"):
-        #     for images in soup.find(
-        #             "div", class_="blog-post__content").find_all(
-        #                 "div", class_="size-80 align-center mt-half mb-3"):
-        #         img = images.find_previous_sibling().find("img")
-        #         img['alt'] = small_name.text
-        #         small_name.decompose()
-
-
-    
+            newh2 = soup.new_tag('h2')
+            try:
+                content.replace_with(content.string.wrap(newh2))
+            except Exception:
+                continue
+        """делает alt в img"""
+        for small_name in soup.find(
+                "div", class_="blog-post__content").find_all(
+                    "div", class_="size-80 align-center mt-half mb-3"):
+            for images in soup.find(
+                    "div", class_="blog-post__content").find_all(
+                        "div", class_="size-80 align-center mt-half mb-3"):
+                img = images.find_previous_sibling().find("img")
+                img['alt'] = small_name.text
+                small_name.decompose()
+        """заменяет bold/italic и удаляет остальные классы и стили"""
         for tag in soup():
             for attr in ['class', 'style']:
-                try:    
+                try:
                     for value in tag[attr]:
-                        if value == "weight-bold": #получается настроить только так на конкертный атрибут
-                            """не могу настроить регулярки для поиска слова bold отдельно
-                                italic придется искать отдельно так как действие другое
-                                заменять приедтся не на b, а на i.
-                            """
-                            tag.replace_with(tag.string.wrap(soup.new_tag('b'))) #замена работает
+                        if "bold" in value:
+                            tag.replace_with(tag.string.wrap(
+                                soup.new_tag('b')))
+                        elif 'italic' in value:
+                            tag.replace_with(tag.string.wrap(
+                                soup.new_tag('i')))
                         else:
-                            #полное удаление работает
                             del tag[attr]
 
                 except:
                     pass
-                        
 
-        with open('header_test.html', 'w') as f:
+        with open('reverb.html', 'w') as f:
             f.write(soup.prettify())
+
+        return soup.prettify()
 
 
 if __name__ == "__main__":
     r = Reverb()
-    r.get_post("https://reverb.com/news/a-timeline-of-les-pauls")
+    print(r.get_post("https://reverb.com/news/a-timeline-of-les-pauls"))
